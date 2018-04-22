@@ -21,6 +21,9 @@ public class Node {
         this.attr = attr;
     }
     
+    public Node(){
+    }
+    
     public void addBranch(Branch branch){
         values.add(branch);
     }

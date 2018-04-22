@@ -15,6 +15,7 @@ import decision_trees.Value;
  */
 public class Branch {
     public Value val;
+    public Node leaf;
     
     public Branch(Value val){
         this.val = val;
@@ -22,6 +23,14 @@ public class Branch {
 
     public Value getVal() {
         return val;
+    }
+    
+    public void addLeaf(Node node){
+        this.leaf = node;
+    }
+    
+    public Node getLeaf(){
+        return this.leaf;
     }
     
     

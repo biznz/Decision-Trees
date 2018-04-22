@@ -79,7 +79,7 @@ public class Decision_Trees {
             Return Root
     */
     
-    protected static Node ID3(Set<Example> examples,Set<Attribute> attributes,Attribute target_attribute){
+    protected static Node ID3(Set<Example> examples,Attribute target_attribute,Set<Attribute> attributes){
         //Create a root node for the tree
         Node root = new Node(null);
         
@@ -105,18 +105,47 @@ public class Decision_Trees {
             Attribute A = IMPORTANCE(attributes,examples);
             // Decision Tree attribute for Root = A
             root.setAttribute(A);
+            //For each possible value, vi, of A,
             for(Value v: A.getPossibleValues()){
+                //Add a new tree branch below Root,
+                //corresponding to the test A = vi.
                 Branch newBranch = new Branch(v);
                 root.addBranch(newBranch);
+                //Let Examples(vi) be the subset of examples that
+                // have the value vi for A
                 Set<Example> subSet_Examples = subSetHavingAttribute(examples,A,v);
+                //If Examples(vi) is empty
                 if(subSet_Examples.isEmpty()){
-                    //newBranch.
+                    //below this new branch add a leaf node
+                    Node leafNode = new Node();
+                    //newBranch.addLeaf(leafNode);
+                    //label = most common target value in the examples
+                    String label = "most common target value in the examples";
+                    leafNode.setLabel(label);
+                    newBranch.addLeaf(leafNode);
+                }
+                else{
+                    //below this new branch add the subtree
+                    //using removing selected attribute
+                    HashSet<Attribute> newAttributes = Attributes_removedA(attributes,A);
+                    Node subTree = ID3(subSet_Examples, target_attribute, newAttributes);
+                    newBranch.addLeaf(subTree);
                 }
             }
         }
         return root;
     }
     
+    public static 
+    
+    public static HashSet<Attribute> Attributes_removedA(Set<Attribute> attributes,Attribute toRemove){
+        HashSet<Attribute> att = new HashSet<Attribute>();
+        for(Attribute attr:attributes){
+            att.add(attr);
+        }
+        att.remove(toRemove);
+        return att;
+    }
     
     public static Set<Example> subSetHavingAttribute(Set<Example> examples,Attribute attr,Value v){
         Set<Example> subSet = new HashSet<Example>();
@@ -129,10 +158,13 @@ public class Decision_Trees {
     }
     
     
-    
     public static boolean examplesArePositive(Set<Example> examples,Attribute target_attribute){
+        String classification = null;
         for(Example ex: examples){
-            if(ex.getValue(target_attribute).getContent().equals("no")){
+            if(classification == null){
+               classification = ex.getValue(target_attribute).getContent();
+            }
+            else if(ex.getValue(target_attribute).getContent().equals(classification)){
                 return false;
             }
         }
@@ -140,8 +172,12 @@ public class Decision_Trees {
     }
     
     public static boolean examplesAreNegative(Set<Example> examples,Attribute target_attribute){
+        String classification = null;
         for(Example ex: examples){
-            if(ex.getValue(target_attribute).getContent().equals("yes")){
+            if(classification == null){
+               classification = ex.getValue(target_attribute).getContent();
+            }
+            else if(ex.getValue(target_attribute).getContent().equals(classification)){
                 return false;
             }
         }
