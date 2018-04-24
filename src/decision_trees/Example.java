@@ -25,4 +25,15 @@ public class Example {
     public Value getValue(Attribute attr){
         return content.get(attr);
     }
+
+    @Override
+    public String toString() {
+        String content = "";
+        for(Attribute attr:this.content.keySet()){
+            content+=" "+this.content.get(attr).getContent();
+        }
+        return "Example{" + "content=" + content + '}';
+    }
+    
+    
 }
