@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
@@ -28,6 +29,7 @@ public class Decision_Trees {
      */
     
     public static Attribute goal = null;
+    public static int treeDepth = 0;
     public static void main(String[] args) {
         // TODO code application logic here
         try{
@@ -64,6 +66,7 @@ public class Decision_Trees {
                 //System.out.println(example.getKeys()+"\n");
             }
             Node Tree_root = ID3(examples,null,attributes);
+            GENERAL_SEARCH(Tree_root,new Fifo());
         }
         catch(IOException FnF){
             FnF.printStackTrace();
@@ -111,7 +114,7 @@ public class Decision_Trees {
     
     protected static Node ID3(HashSet<Example> examples,Attribute target_attribute,ArrayList<Attribute> attributes){
         //Create a root node for the tree
-        Node root = new Node(null);
+        Node root = new Node(target_attribute);
         
         /*
             If all examples have the same classifier,
@@ -152,6 +155,7 @@ public class Decision_Trees {
             Attribute A = IMPORTANCE(attributes,examples);
             // Decision Tree attribute for Root = A
             root.setAttribute(A);
+            //treeDepth+=1;
 //            return root;
             //For each possible value, vi, of A,
             for(Value v: A.getPossibleValues()){
@@ -183,6 +187,7 @@ public class Decision_Trees {
                 }
             }
         }
+        root.SetDepth(treeDepth+1);
         return root;
     }
     
@@ -348,16 +353,31 @@ public class Decision_Trees {
             //Class classifier = new Classifier(goalVal.getContent());
             goalCounter.get(s).replace(goalVal, goalCounter.get(s).get(goalVal)+1);
         }
+//        System.out.println(valueCounter);
+//        System.out.println("-----------");
+//        System.out.println(goalCounter);
+//        System.out.println("-----------");
         for(Value s:attr.getPossibleValues()){
             Class classifier = new Class();
             Value v = null;
             int count=0;
+//            System.out.println("VALUE s:"+s);
             for(Value a:goalCounter.get(s).keySet()){
-                
+                if(goalCounter.get(s).get(a)>=count){
+                    v = a;
+                    count = goalCounter.get(s).get(a);
+                }
+//                System.out.println("goal val: "+a+"counter: "+goalCounter.get(s).get(a));
+//                classifier.setValue(a);
+//                classifier.setCounter(goalCounter.get(s).get(a));
                 //System.out.println("value :"+s+" "+"value:"+a+" "+goalCounter.get(s).get(a));
             }
-            //String val = goalCounter.get(s).get(s);
-            //Class classifier = new Classifi
+//            System.out.println("found value:"+v);
+            classifier.setValue(v);
+            classifier.setCounter(goalCounter.get(s).get(v));
+            s.setClassifier(classifier);
+////            String val = goalCounter.get(s).get(s);
+//            //Class classifier = new Classifi
         }
         
 //        System.out.println("the attribute:"+attr);
@@ -400,5 +420,57 @@ public class Decision_Trees {
     
     public static double log2(double num){
         return Math.log(num)/Math.log(2);
+    }
+    
+    
+    protected static String GENERAL_SEARCH(Node root,MyQueue<Node> QUEUEING_FN){
+        MyQueue<Node> nodes = MAKE_QUEUE(QUEUEING_FN,root);
+        while(!EMPTY(nodes)){
+            Node node = REMOVE_FRONT(nodes);
+            String tab = "\t";
+            for(int i=0;i<node.GetDepth();i++){
+                System.out.print(tab);
+            }
+            System.out.println(node);
+            Set<Node> new_nodes = EXPAND(node);
+            nodes = QUEUEING_FN.add(nodes,new_nodes);
+        }
+        return "solution not found";
+    }
+    
+    private static MyQueue<Node> MAKE_QUEUE(MyQueue<Node> queue,Node node){
+        queue.add(queue, node);
+        return queue;
+    }
+    
+    private static Set<Node> EXPAND(Node node){
+        Set<Node> childNodes = new HashSet<Node>();
+        for(Branch b:node.getValues()){
+            childNodes.add(b.getLeaf());
+        }
+        return childNodes;
+    }
+    
+    
+    protected static boolean EMPTY(MyQueue<Node> myQueue){
+        if(myQueue.size==0)return true;
+        return false;
+    }
+    
+    private static Node REMOVE_FRONT(MyQueue<Node> nodes){
+        Node node = null;
+        //Algorithm.currentDepth+=1;
+        if(nodes.size==0){return node;}
+        //System.out.println(nodes.type+"\n");
+        Fifo fifo = (Fifo)nodes;
+                //System.out.println("Removing the following node");
+        try{
+            node = (Node)fifo.list.remove();
+            fifo.size--;
+            }
+        catch(NoSuchElementException ex){
+            return null;
+        }
+        return node;
     }
 }

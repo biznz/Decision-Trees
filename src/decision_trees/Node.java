@@ -13,15 +13,25 @@ import java.util.ArrayList;
  */
 public class Node {
     private Attribute attr;
+    private int depth;
     private ArrayList<Branch> values;
     private String label;
 
     public Node(Attribute attr){
         values = new ArrayList<Branch>();
         this.attr = attr;
+        this.depth = -1;
     }
     
     public Node(){
+    }
+    
+    public void SetDepth(int depth){
+        this.depth = depth;
+    }
+    
+    public int GetDepth(){
+        return this.depth;
     }
     
     public void addBranch(Branch branch){
@@ -50,8 +60,13 @@ public class Node {
 
     @Override
     public String toString() {
-        return "Node{" + "attr=" + attr + ", label=" + label + '}';
+        if(attr!=null){
+            return attr.toString();
+        }
+        return attr.text+":";
+        //return "Node{" + "attr=" + attr + ", label=" + label + '}';
     }
+    
     
     
 }

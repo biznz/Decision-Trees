@@ -37,7 +37,7 @@ public class Attribute {
 
     @Override
     public String toString() {
-        return "Attribute{" + "text=" + text + '}';
+        return "<" + text + '>';
     }
 
     @Override
