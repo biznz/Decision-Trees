@@ -6,6 +6,8 @@
 package decision_trees;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  *
@@ -13,6 +15,7 @@ import java.util.HashMap;
  */
 public class Example {
     HashMap<Attribute,Value> content;
+    String id;
     
     public Example(){
         content = new HashMap<Attribute,Value>();
@@ -26,13 +29,33 @@ public class Example {
         return content.get(attr);
     }
 
+    public HashMap<Attribute, Value> getContent() {
+        return content;
+    }
+
+    public void setContent(HashMap<Attribute, Value> content) {
+        this.content = content;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+    
+    public Set<Attribute> getKeys(){
+        return this.content.keySet();
+    }
+
     @Override
     public String toString() {
         String content = "";
         for(Attribute attr:this.content.keySet()){
-            content+=" "+this.content.get(attr).getContent();
+            content+=" "+attr+" : "+this.content.get(attr).getContent();
         }
-        return "Example{" + "content=" + content + '}';
+        return "Example{id:" + id + "content=" + content + '}';
     }
     
     

@@ -7,6 +7,7 @@ package decision_trees;
 
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -33,4 +34,37 @@ public class Attribute {
     public Set<Value> getPossibleValues(){
         return this.possibleValues;
     }
+
+    @Override
+    public String toString() {
+        return "Attribute{" + "text=" + text + '}';
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 89 * hash + Objects.hashCode(this.text);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Attribute other = (Attribute) obj;
+        if (!Objects.equals(this.text, other.text)) {
+            return false;
+        }
+        return true;
+    }
+    
+    
+
 }

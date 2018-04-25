@@ -47,5 +47,11 @@ public class Node {
     public Attribute getAttribute(){
         return this.attr;
     }
+
+    @Override
+    public String toString() {
+        return "Node{" + "attr=" + attr + ", label=" + label + '}';
+    }
+    
     
 }

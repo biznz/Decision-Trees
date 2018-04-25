@@ -31,29 +31,37 @@ public class Decision_Trees {
     public static void main(String[] args) {
         // TODO code application logic here
         try{
+            
+            // reads the file with a file reader into a buffer
             BufferedReader in = new BufferedReader(new FileReader(new File(args[0]))); //restaurant.csv,weather.csv,
+            //first line from the file contains the attribute description
             String[] Attributes = in.readLine().split(",");
+            //arraylist containing the attributes
             ArrayList<Attribute> attributes = new ArrayList<Attribute>();
-            for(String s:Attributes){
-                attributes.add(new Attribute(s));
+            for(int i=1;i<Attributes.length;i++){
+                attributes.add(new Attribute(Attributes[i]));
             }
+            // goal attribute records the classifier
             goal = attributes.get(attributes.size()-1);
+            // the set of examples on the file 
             HashSet<Example> examples = new HashSet<Example>();
             String l;
             while(( l = in.readLine())!=null){
                 String[] line = l.split(",");
                 int counter = 0;
                 Example example = new Example();
-                for(String a:line){
-                    Value v = new Value(line[counter]);
-                    if(!attributes.get(counter).possibleValues.contains(v)){
-                        attributes.get(counter).possibleValues.add(v);
+                example.setId(line[0]);
+                for(int i=1;i<line.length;i++){
+                    Value v = new Value(line[i]);
+                    //System.out.println(attributes.get(i-1));
+//                    System.out.println(v);
+                    if(!attributes.get(i-1).possibleValues.contains(v)){
+                        attributes.get(i-1).possibleValues.add(v);
                     }
-                    example.add(attributes.get(counter), v);
-                    counter++;
+                    example.add(attributes.get(i-1), v);
                 }
                 examples.add(example);
-                System.out.println(example);
+                //System.out.println(example.getKeys()+"\n");
             }
             Node Tree_root = ID3(examples,null,attributes);
         }
@@ -144,6 +152,7 @@ public class Decision_Trees {
             Attribute A = IMPORTANCE(attributes,examples);
             // Decision Tree attribute for Root = A
             root.setAttribute(A);
+//            return root;
             //For each possible value, vi, of A,
             for(Value v: A.getPossibleValues()){
                 //Add a new tree branch below Root,
@@ -167,7 +176,9 @@ public class Decision_Trees {
                     //below this new branch add the subtree
                     //using removing selected attribute
                     ArrayList<Attribute> newAttributes = Attributes_removedA(attributes,A);
+//                    System.out.println("newAttributes from removal:"+ newAttributes);
                     Node subTree = ID3(subSet_Examples, root.getAttribute(), newAttributes);
+//                    System.out.println("the subtree: "+subTree);
                     newBranch.addLeaf(subTree);
                 }
             }
@@ -180,18 +191,21 @@ public class Decision_Trees {
     */
     public static HashMap<Value,Integer> valuesCount(HashSet<Example> examples, Attribute target_attribute){
         HashMap<Value,Integer> valueCounter = new HashMap<Value,Integer>();
+//        System.out.println("attribute possible values:"+target_attribute.getPossibleValues());
         for(Value v:target_attribute.getPossibleValues()){
-            int counter = 0;
-            for(Example ex:examples){
-                if(valueCounter.containsKey(ex.content.get(target_attribute))){
-                    counter+=1;
-                    valueCounter.replace(v, counter);
-                }
-                else{
-                    valueCounter.put(v, new Integer(1));
-                }
-            }
+            if(!valueCounter.containsKey(v)){valueCounter.put(v, 0);}
         }
+        //System.out.println(valueCounter);
+        //System.out.println("looking for attribute:"+target_attribute);
+        for(Example ex:examples){
+            //System.out.println("in example:"+ex);
+            Value v = ex.getValue(target_attribute);
+//            System.out.println("Found value v:"+v);
+//            System.out.println(ex.getContent());
+            valueCounter.replace(v, valueCounter.get(v)+1);
+        }
+//        System.out.println("the searched attribute: "+target_attribute);
+//        System.out.println(valueCounter);
         return valueCounter;
     }
     
@@ -242,6 +256,7 @@ public class Decision_Trees {
     */
     
     public static boolean examplesHaveSameClassifier(Set<Example> examples,Attribute target_attribute){
+        //System.out.println(target_attribute);
         String classification = null;
         for(Example ex: examples){
             if(classification == null){
@@ -289,13 +304,19 @@ public class Decision_Trees {
     */
     
     public static Attribute IMPORTANCE(ArrayList<Attribute> attributes, HashSet<Example> examples){
-        Attribute maximizer = null;
-        double entropy_value = 0;
+        Attribute minimizer = null;
+        double entropy_value = Short.MAX_VALUE;
         for(Attribute attr:attributes){
-            double attribute_entropy = ENTROPY(attr,examples);
-            System.out.println(attribute_entropy);
+            if(!attr.text.equals("Class")){
+                double attribute_entropy = ENTROPY(attr,examples);
+                if(attribute_entropy<entropy_value){
+                    minimizer = attr;
+                    entropy_value=attribute_entropy;
+                }
+            }
         }
-        return maximizer;
+        System.out.println("\n\n\nThe minimizer:"+minimizer+"\n\n");
+        return minimizer;
     }
     
     /*
@@ -308,6 +329,8 @@ public class Decision_Trees {
         int total_examples = examples.size();
         // ocurrence of value in examples
         HashMap<Value,Integer> valueCounter = valuesCount(examples,attr);
+        //System.out.println(attr);
+        //System.out.println(valueCounter);
         HashMap<Value,HashMap<Value,Integer>> goalCounter = new HashMap<Value,HashMap<Value,Integer>>();
         for(Value v:valueCounter.keySet()){
             HashMap<Value,Integer> possibleValues = new HashMap<Value,Integer>();
@@ -315,26 +338,63 @@ public class Decision_Trees {
                 possibleValues.put(possible, 0);
             }
             goalCounter.put(v, possibleValues);
+            //System.out.println(possibleValues);
         }
+//        double result = 0;
+//        return result;
         for(Example ex:examples){
             Value s = ex.content.get(attr);
             Value goalVal = ex.content.get(goal);
+            //Class classifier = new Classifier(goalVal.getContent());
             goalCounter.get(s).replace(goalVal, goalCounter.get(s).get(goalVal)+1);
         }
+        for(Value s:attr.getPossibleValues()){
+            Class classifier = new Class();
+            Value v = null;
+            int count=0;
+            for(Value a:goalCounter.get(s).keySet()){
+                
+                //System.out.println("value :"+s+" "+"value:"+a+" "+goalCounter.get(s).get(a));
+            }
+            //String val = goalCounter.get(s).get(s);
+            //Class classifier = new Classifi
+        }
+        
+//        System.out.println("the attribute:"+attr);
+//        System.out.println(goalCounter);
         double result=0;
-        System.out.println(valueCounter);
+        //System.out.println(valueCounter);
         for(Value v:valueCounter.keySet()){
-            double div = valueCounter.get(v)/total_examples;
-            //System.out.println(valueCounter.get(v)+"/"+total_examples);
+            double div = valueCounter.get(v)/(total_examples*1.0);
+//            System.out.println("current value v:"+v);
+//            System.out.println(valueCounter.get(v)+"/"+total_examples+" "+div);
             double total=0;
+            double currentSum=0;
             for(Value possibleGoal:goalCounter.get(v).keySet()){
                 double count = goalCounter.get(v).get(possibleGoal);
                 //System.out.println("count :"+count);
-                total = -1*(count/total_examples)*log2((count/total_examples));
+                if(count==0.0){
+//                    System.out.println(count+"/"+total_examples+"log2"+count+"/"+total_examples);
+                    total = 0.0;
+//                    System.out.println("current total is"+total);
+                }
+                else{
+//                    System.out.println(count+"/"+total_examples+"log2"+count+"/"+total_examples);
+                    total = -1*(count/total_examples)*log2((count/total_examples));
+//                    System.out.println("current total is"+total);
+                }
+                currentSum+=total;
+                
             }
-            div = div*total;
+            //div = div*total;
+            div = div * currentSum;
+            //total= total*div;
+//            System.out.println("the div: "+div);
             result+=div;
+//            System.out.println("count sum: "+result);
+//            System.out.println("-----------");
         }
+//        System.out.println("Returning result:  \n\n\nresult :"+result);
         return result;
     }
     
