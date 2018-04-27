@@ -24,6 +24,8 @@ public class Node {
     }
     
     public Node(){
+        values = new ArrayList<Branch>();
+        this.depth = -1;
     }
     
     public void SetDepth(int depth){
@@ -58,14 +60,21 @@ public class Node {
         return this.attr;
     }
 
+    
     @Override
     public String toString() {
         if(attr!=null){
             return attr.toString();
         }
-        return attr.text+":";
+        return this.getLabel();
+        //return attr.text+":";
         //return "Node{" + "attr=" + attr + ", label=" + label + '}';
     }
+
+//    @Override
+//    public String toString() {
+//        return "Node{" + "attr=" + attr + ", depth=" + depth + ", values=" + values + ", label=" + label + '}';
+//    }
     
     
     

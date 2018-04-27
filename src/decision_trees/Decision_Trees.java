@@ -29,7 +29,7 @@ public class Decision_Trees {
      */
     
     public static Attribute goal = null;
-    public static int treeDepth = 0;
+    public static int treeDepth = -1;
     public static void main(String[] args) {
         // TODO code application logic here
         try{
@@ -62,10 +62,11 @@ public class Decision_Trees {
                     }
                     example.add(attributes.get(i-1), v);
                 }
+                System.out.println(example);
                 examples.add(example);
                 //System.out.println(example.getKeys()+"\n");
             }
-            Node Tree_root = ID3(examples,null,attributes);
+            Node Tree_root = ID3(examples,goal,attributes);
             GENERAL_SEARCH(Tree_root,new Fifo());
         }
         catch(IOException FnF){
@@ -114,54 +115,36 @@ public class Decision_Trees {
     
     protected static Node ID3(HashSet<Example> examples,Attribute target_attribute,ArrayList<Attribute> attributes){
         //Create a root node for the tree
-        Node root = new Node(target_attribute);
+        Node root = new Node();
         
         /*
             If all examples have the same classifier,
             return the single-node tree Root, with label classifier;
         */
         if(examplesHaveSameClassifier(examples,goal))
-            {   Value v = ((Example)examples.toArray()[0]).getValue(target_attribute); 
-                root.setLabel(v.getContent());return root;}
-        
-        /*If all examples are positive,
-            Return the single-node tree Root, with label = +. */
-//        if(examplesArePositive(examples,target_attribute))
-//            {   Value v = ((Example)examples.toArray()[0]).getValue(target_attribute);
-//                root.setLabel(v.getContent());return root;}
-//        
-//        /*If all examples are negative,
-//            Return the single-node tree Root, with label = -. */
-//        if(examplesAreNegative(examples,target_attribute))
-//            {   Value v = ((Example)examples.toArray()[0]).getValue(target_attribute); 
-//                root.setLabel(v.getContent());return root;}
-        
-        /*If number of predicting attributes is empty, Return the single node tree Root, 
-            with label = most common value of the
-            target attribute in the examples. */
+            {
+                Value v = ((Example)examples.toArray()[0]).getValue(target_attribute);
+                root.setLabel(v.getContent());
+                return root;
+            }
         
         if(attributes.isEmpty())
             { 
                 Value v = mostCommonValueOnTargetAttribute(examples,target_attribute);
                 root.setAttribute(target_attribute);
                 root.setLabel(v.getContent());
-                //
-                //root.setLabel(l);
-//                root.setLabel("most common value of target attribute in the examples");return root;
             }
         
         else{
-            // A = Attribute that best classifies examples
+            
             Attribute A = IMPORTANCE(attributes,examples);
-            // Decision Tree attribute for Root = A
             root.setAttribute(A);
-            //treeDepth+=1;
-//            return root;
-            //For each possible value, vi, of A,
             for(Value v: A.getPossibleValues()){
                 //Add a new tree branch below Root,
                 //corresponding to the test A = vi.
                 Branch newBranch = new Branch(v);
+//                System.out.println(newBranch);
+                newBranch.setDepth(root.GetDepth()+1);
                 root.addBranch(newBranch);
                 //Let Examples(vi) be the subset of examples that
                 // have the value vi for A
@@ -170,19 +153,14 @@ public class Decision_Trees {
                 if(subSet_Examples.isEmpty()){
                     //below this new branch add a leaf node
                     Node leafNode = new Node();
-                    //newBranch.addLeaf(leafNode);
-                    //label = most common target value in the examples
-                    String label = "most common target value in the examples";
+                    String label = mostCommonValueOnTargetAttribute(examples,target_attribute).getContent();
                     leafNode.setLabel(label);
+                    leafNode.SetDepth(newBranch.getDepth()+1);
                     newBranch.addLeaf(leafNode);
                 }
                 else{
-                    //below this new branch add the subtree
-                    //using removing selected attribute
                     ArrayList<Attribute> newAttributes = Attributes_removedA(attributes,A);
-//                    System.out.println("newAttributes from removal:"+ newAttributes);
                     Node subTree = ID3(subSet_Examples, root.getAttribute(), newAttributes);
-//                    System.out.println("the subtree: "+subTree);
                     newBranch.addLeaf(subTree);
                 }
             }
@@ -200,10 +178,7 @@ public class Decision_Trees {
         for(Value v:target_attribute.getPossibleValues()){
             if(!valueCounter.containsKey(v)){valueCounter.put(v, 0);}
         }
-        //System.out.println(valueCounter);
-        //System.out.println("looking for attribute:"+target_attribute);
         for(Example ex:examples){
-            //System.out.println("in example:"+ex);
             Value v = ex.getValue(target_attribute);
 //            System.out.println("Found value v:"+v);
 //            System.out.println(ex.getContent());
@@ -353,10 +328,6 @@ public class Decision_Trees {
             //Class classifier = new Classifier(goalVal.getContent());
             goalCounter.get(s).replace(goalVal, goalCounter.get(s).get(goalVal)+1);
         }
-//        System.out.println(valueCounter);
-//        System.out.println("-----------");
-//        System.out.println(goalCounter);
-//        System.out.println("-----------");
         for(Value s:attr.getPossibleValues()){
             Class classifier = new Class();
             Value v = null;
@@ -367,27 +338,15 @@ public class Decision_Trees {
                     v = a;
                     count = goalCounter.get(s).get(a);
                 }
-//                System.out.println("goal val: "+a+"counter: "+goalCounter.get(s).get(a));
-//                classifier.setValue(a);
-//                classifier.setCounter(goalCounter.get(s).get(a));
-                //System.out.println("value :"+s+" "+"value:"+a+" "+goalCounter.get(s).get(a));
             }
-//            System.out.println("found value:"+v);
             classifier.setValue(v);
             classifier.setCounter(goalCounter.get(s).get(v));
             s.setClassifier(classifier);
-////            String val = goalCounter.get(s).get(s);
-//            //Class classifier = new Classifi
         }
         
-//        System.out.println("the attribute:"+attr);
-//        System.out.println(goalCounter);
         double result=0;
-        //System.out.println(valueCounter);
         for(Value v:valueCounter.keySet()){
             double div = valueCounter.get(v)/(total_examples*1.0);
-//            System.out.println("current value v:"+v);
-//            System.out.println(valueCounter.get(v)+"/"+total_examples+" "+div);
             double total=0;
             double currentSum=0;
             for(Value possibleGoal:goalCounter.get(v).keySet()){
@@ -422,6 +381,14 @@ public class Decision_Trees {
         return Math.log(num)/Math.log(2);
     }
     
+    
+    protected static void TreeTraversal(Node root){
+       System.out.println("<"+root+">");
+       ArrayList<Branch> arraylist = root.getValues();
+       for(int s = 0;s<arraylist.size();s++){
+           System.out.println("\t"+arraylist.get(s).getVal());
+       }
+    }
     
     protected static String GENERAL_SEARCH(Node root,MyQueue<Node> QUEUEING_FN){
         MyQueue<Node> nodes = MAKE_QUEUE(QUEUEING_FN,root);

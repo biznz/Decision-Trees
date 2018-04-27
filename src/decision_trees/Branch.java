@@ -16,6 +16,7 @@ import decision_trees.Value;
 public class Branch {
     public Value val;
     public Node leaf;
+    public int depth;
     
     public Branch(Value val){
         this.val = val;
@@ -32,6 +33,21 @@ public class Branch {
     public Node getLeaf(){
         return this.leaf;
     }
+    
+    public void setDepth(int depth){
+        this.depth = depth;
+    }
+    
+    public int getDepth(){
+        return this.depth;
+    }
+
+    @Override
+    public String toString() {
+        return "Branch{" + "val=" + val + ", leaf=" + leaf + ", depth=" + depth + '}';
+    }
+    
+    
     
     
 }
