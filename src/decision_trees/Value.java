@@ -33,7 +33,7 @@ public class Value {
 
     @Override
     public String toString() {
-        return "Value{" + "content=" + content + '}';
+        return content;
     }
 
     @Override

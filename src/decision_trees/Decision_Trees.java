@@ -29,7 +29,9 @@ public class Decision_Trees {
      */
     
     public static Attribute goal = null;
-    public static int treeDepth = -1;
+    public static int treeDepth = 0;
+    public static int level = 0;
+    
     public static void main(String[] args) {
         // TODO code application logic here
         try{
@@ -62,12 +64,14 @@ public class Decision_Trees {
                     }
                     example.add(attributes.get(i-1), v);
                 }
-                System.out.println(example);
+                //System.out.println(example);
                 examples.add(example);
                 //System.out.println(example.getKeys()+"\n");
             }
             Node Tree_root = ID3(examples,goal,attributes);
-            GENERAL_SEARCH(Tree_root,new Fifo());
+            //GENERAL_SEARCH(Tree_root,new Fifo());
+            TreeTraversal(Tree_root);
+            
         }
         catch(IOException FnF){
             FnF.printStackTrace();
@@ -116,7 +120,8 @@ public class Decision_Trees {
     protected static Node ID3(HashSet<Example> examples,Attribute target_attribute,ArrayList<Attribute> attributes){
         //Create a root node for the tree
         Node root = new Node();
-        
+//        root.SetDepth(treeDepth);
+//        treeDepth+=1;
         /*
             If all examples have the same classifier,
             return the single-node tree Root, with label classifier;
@@ -124,7 +129,8 @@ public class Decision_Trees {
         if(examplesHaveSameClassifier(examples,goal))
             {
                 Value v = ((Example)examples.toArray()[0]).getValue(target_attribute);
-                root.setLabel(v.getContent());
+//                root.setLabel(v.getContent());
+                root.setValue(v);
                 return root;
             }
         
@@ -132,11 +138,12 @@ public class Decision_Trees {
             { 
                 Value v = mostCommonValueOnTargetAttribute(examples,target_attribute);
                 root.setAttribute(target_attribute);
-                root.setLabel(v.getContent());
+//                root.setLabel(v.getContent());
+                root.setValue(v);
+                return root;
             }
         
         else{
-            
             Attribute A = IMPORTANCE(attributes,examples);
             root.setAttribute(A);
             for(Value v: A.getPossibleValues()){
@@ -144,7 +151,8 @@ public class Decision_Trees {
                 //corresponding to the test A = vi.
                 Branch newBranch = new Branch(v);
 //                System.out.println(newBranch);
-                newBranch.setDepth(root.GetDepth()+1);
+                //System.out.println(root.getDepth()+1);
+                //newBranch.setDepth(root.getDepth()+1);
                 root.addBranch(newBranch);
                 //Let Examples(vi) be the subset of examples that
                 // have the value vi for A
@@ -153,19 +161,22 @@ public class Decision_Trees {
                 if(subSet_Examples.isEmpty()){
                     //below this new branch add a leaf node
                     Node leafNode = new Node();
-                    String label = mostCommonValueOnTargetAttribute(examples,target_attribute).getContent();
-                    leafNode.setLabel(label);
-                    leafNode.SetDepth(newBranch.getDepth()+1);
+                    Value val = mostCommonValueOnTargetAttribute(examples,target_attribute);
+                    leafNode.setValue(val);
+//                    System.out.println(leafNode.getLabel());
+//                    System.out.println(newBranch.getDepth()+1);
+//                    leafNode.SetDepth(newBranch.getDepth()+1);
                     newBranch.addLeaf(leafNode);
                 }
                 else{
                     ArrayList<Attribute> newAttributes = Attributes_removedA(attributes,A);
-                    Node subTree = ID3(subSet_Examples, root.getAttribute(), newAttributes);
+                    Node subTree = ID3(subSet_Examples, target_attribute, newAttributes);
+//                    subTree.SetDepth(newBranch.getDepth()+1);
                     newBranch.addLeaf(subTree);
                 }
             }
         }
-        root.SetDepth(treeDepth+1);
+        //root.SetDepth(treeDepth+1);
         return root;
     }
     
@@ -287,7 +298,7 @@ public class Decision_Trees {
         Attribute minimizer = null;
         double entropy_value = Short.MAX_VALUE;
         for(Attribute attr:attributes){
-            if(!attr.text.equals("Class")){
+            if(!attr.text.equals(goal.getText())){
                 double attribute_entropy = ENTROPY(attr,examples);
                 if(attribute_entropy<entropy_value){
                     minimizer = attr;
@@ -295,7 +306,7 @@ public class Decision_Trees {
                 }
             }
         }
-        System.out.println("\n\n\nThe minimizer:"+minimizer+"\n\n");
+        //System.out.println("\n\n\nThe minimizer:"+minimizer+"\n\n");
         return minimizer;
     }
     
@@ -318,7 +329,7 @@ public class Decision_Trees {
                 possibleValues.put(possible, 0);
             }
             goalCounter.put(v, possibleValues);
-            //System.out.println(possibleValues);
+//            System.out.println(possibleValues);
         }
 //        double result = 0;
 //        return result;
@@ -337,11 +348,13 @@ public class Decision_Trees {
                 if(goalCounter.get(s).get(a)>=count){
                     v = a;
                     count = goalCounter.get(s).get(a);
+//                    System.out.println("count "+count);
                 }
             }
-            classifier.setValue(v);
-            classifier.setCounter(goalCounter.get(s).get(v));
-            s.setClassifier(classifier);
+//            classifier.setValue(v);
+//            classifier.setCounter(goalCounter.get(s).get(v));
+//            System.out.println("the value:"+v+" with value:"+goalCounter.get(s).get(v));
+//            s.setClassifier(classifier);
         }
         
         double result=0;
@@ -382,11 +395,81 @@ public class Decision_Trees {
     }
     
     
-    protected static void TreeTraversal(Node root){
-       System.out.println("<"+root+">");
-       ArrayList<Branch> arraylist = root.getValues();
-       for(int s = 0;s<arraylist.size();s++){
-           System.out.println("\t"+arraylist.get(s).getVal());
+//    protected static void printSpaces(int spaces){
+//        for(int a=0;a<spaces;a++){
+//            System.out.print("  ");
+//        }
+//    }
+    
+    protected static void printSpaces(Node node){
+        for(int a=0;a<node.getDepth();a++){
+            System.out.print("  ");
+        }
+    }
+    
+    protected static void printSpaces(Branch branch){
+        for(int a=0;a<branch.getDepth();a++){
+            System.out.print("  ");
+        }
+    }
+    
+//    static void TreeTraversal(Node root){
+//        if(root.getAttribute()!=null){
+//            System.out.println();
+//            printSpaces(root);
+//            root.SetDepth(level+1);
+//            level+=1;
+//            System.out.print(root+"\n");
+//        }
+//        else{
+//            //printSpaces(root.getDepth());
+//            System.out.print(root+"\n");
+//            root.SetDepth(level+1);
+//            level+=1;
+//        }
+//    }
+    
+    static int countInExamples(Node node){
+        int d;
+        Attribute attr;
+        if(node.getAttribute()!=null){
+            attr=node.getAttribute();
+        }
+        ArrayList<Branch> arraylist = node.getValues();
+        for(int s = 0;s<node.getValues().size();s++){
+            if(arraylist.get(s).getLeaf().getAttribute()==null){
+                
+            }
+        }
+        return -1;
+    }
+    
+    static void TreeTraversal(Node root){
+        if(root.getAttribute()!=null){
+            System.out.println();
+            printSpaces(root);
+//            level+=1;
+//            root.SetDepth(level);
+            System.out.print(root+"\n");
+        }
+        else{
+//            printSpaces(root);
+            System.out.print(root.getValue()+"\n");
+//            level+=1;
+//            root.SetDepth(level);
+        }
+        ArrayList<Branch> arraylist = root.getValues();
+        if(arraylist!=null){
+           for(int s = 0;s<arraylist.size();s++){
+//               printSpaces(arraylist.get(s).getDepth());
+               
+               arraylist.get(s).setDepth(root.getDepth()+1);
+               printSpaces(arraylist.get(s));
+               System.out.print(arraylist.get(s).getVal()+": ");
+               arraylist.get(s).getLeaf().SetDepth(arraylist.get(s).getDepth()+1);
+               TreeTraversal(arraylist.get(s).getLeaf());
+                //TreeTraversal(arraylist.get(s).getVal());
+           }
        }
     }
     
@@ -395,7 +478,7 @@ public class Decision_Trees {
         while(!EMPTY(nodes)){
             Node node = REMOVE_FRONT(nodes);
             String tab = "\t";
-            for(int i=0;i<node.GetDepth();i++){
+            for(int i=0;i<node.getDepth();i++){
                 System.out.print(tab);
             }
             System.out.println(node);

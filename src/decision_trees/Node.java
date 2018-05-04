@@ -16,24 +16,33 @@ public class Node {
     private int depth;
     private ArrayList<Branch> values;
     private String label;
-
+    private Value v;
+    
     public Node(Attribute attr){
         values = new ArrayList<Branch>();
         this.attr = attr;
-        this.depth = -1;
+        this.depth = 0;
     }
     
     public Node(){
         values = new ArrayList<Branch>();
-        this.depth = -1;
+        this.depth = 0;
     }
     
+    public Node(Value v){
+        this.v = v;
+        this.label = v.getContent();
+    }
     public void SetDepth(int depth){
         this.depth = depth;
     }
     
-    public int GetDepth(){
+    public int getDepth(){
         return this.depth;
+    }
+    
+    public Value getValue(){
+        return this.v;
     }
     
     public void addBranch(Branch branch){
@@ -46,6 +55,10 @@ public class Node {
     
     public void setLabel(String l){
         this.label = l;
+    }
+    
+    public void setValue(Value v){
+        this.v = v;
     }
     
     public String getLabel(){
