@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
+import java.util.Scanner;
 import java.util.Set;
 
 /**
@@ -28,21 +29,38 @@ public class Decision_Trees {
      * @param args the command line arguments
      */
     
-    public static Attribute goal = null;
-    public static int treeDepth = 0;
-    public static int level = 0;
-    public static HashSet<Example> examples;
+    private static Attribute goal = null;
+    private static int treeDepth = 0;
+    private static int level = 0;
+    private static HashSet<Example> examples;
+    private static ArrayList<Attribute> attributes;
     
     public static void main(String[] args) {
         // TODO code application logic here
-        try{
-            
-            // reads the file with a file reader into a buffer
-            BufferedReader in = new BufferedReader(new FileReader(new File(args[0]))); //restaurant.csv,weather.csv,
+        // reads the file with a file reader into a buffer
+        
+        Scanner in = new Scanner(System.in);
+        String line;
+        System.out.print("Give a training file path: ");
+        while((line = in.nextLine()).equals("")){
+            System.out.println("Training data file path: ");
+        }
+        System.out.println(line);
+        
+        readTrainingData(args[0]);
+        Node Tree_root = ID3(examples,goal,attributes);
+        //GENERAL_SEARCH(Tree_root,new Fifo());
+        TreeTraversal(Tree_root);
+        
+        
+    }
+    
+    private static void readTrainingData(String filePath) throws IOException{
+            BufferedReader in = new BufferedReader(new FileReader(new File(filePath))); //restaurant.csv,weather.csv,
             //first line from the file contains the attribute description
             String[] Attributes = in.readLine().split(",");
             //arraylist containing the attributes
-            ArrayList<Attribute> attributes = new ArrayList<Attribute>();
+            attributes = new ArrayList<Attribute>();
             for(int i=1;i<Attributes.length;i++){
                 attributes.add(new Attribute(Attributes[i]));
             }
@@ -68,18 +86,14 @@ public class Decision_Trees {
                 //System.out.println(example);
                 examples.add(example);
                 //System.out.println(example.getKeys()+"\n");
-            }
-            Node Tree_root = ID3(examples,goal,attributes);
-            //GENERAL_SEARCH(Tree_root,new Fifo());
-            TreeTraversal(Tree_root);
-            
+            }    
         }
-        catch(IOException FnF){
-            FnF.printStackTrace();
-        }
+    
+    
+    
+    private static void classifyTestData(String filePath){
         
     }
-    
     /*
         Decision Tree represents a function that takes as input 
         a vector of attribute values and returns a "decision" - a single output value.
