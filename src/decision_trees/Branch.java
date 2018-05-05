@@ -17,21 +17,12 @@ public class Branch {
     public Value val;
     public Node leaf;
     public int depth;
-    public int countDecision;
     
     public Branch(Value val){
         this.val = val;
         this.depth = 0;
-        this.countDecision = 0;
-    }
-
-    public void setCount(int v){
-        this.countDecision = v;
     }
     
-    public int getCount(){
-        return this.countDecision;
-    }
     
     public Value getVal() {
         return val;
@@ -55,7 +46,7 @@ public class Branch {
 
     @Override
     public String toString() {
-        return "Branch{" + "val=" + val + ", leaf=" + leaf + ", depth=" + depth + '}';
+        return "Branch{" + "val=" + val + ", leaf=" + leaf + ", depth=" + depth +" leaf decision "+ leaf.getCount() +'}';
     }
     
     

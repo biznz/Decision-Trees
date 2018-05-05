@@ -31,6 +31,7 @@ public class Decision_Trees {
     public static Attribute goal = null;
     public static int treeDepth = 0;
     public static int level = 0;
+    public static HashSet<Example> examples;
     
     public static void main(String[] args) {
         // TODO code application logic here
@@ -48,7 +49,7 @@ public class Decision_Trees {
             // goal attribute records the classifier
             goal = attributes.get(attributes.size()-1);
             // the set of examples on the file 
-            HashSet<Example> examples = new HashSet<Example>();
+            examples = new HashSet<Example>();
             String l;
             while(( l = in.readLine())!=null){
                 String[] line = l.split(",");
@@ -413,50 +414,40 @@ public class Decision_Trees {
         }
     }
     
-//    static void TreeTraversal(Node root){
-//        if(root.getAttribute()!=null){
-//            System.out.println();
-//            printSpaces(root);
-//            root.SetDepth(level+1);
-//            level+=1;
-//            System.out.print(root+"\n");
-//        }
-//        else{
-//            //printSpaces(root.getDepth());
-//            System.out.print(root+"\n");
-//            root.SetDepth(level+1);
-//            level+=1;
-//        }
-//    }
-    
-    static int countInExamples(Node node){
-        int d;
-        Attribute attr;
+    static void countInExamples(Node node){
+        int d=0;
+        Attribute attr=null;
         if(node.getAttribute()!=null){
             attr=node.getAttribute();
         }
         ArrayList<Branch> arraylist = node.getValues();
         for(int s = 0;s<node.getValues().size();s++){
-            if(arraylist.get(s).getLeaf().getAttribute()==null){
-                
+            d = searchExamples(attr,arraylist.get(s));
+            arraylist.get(s).getLeaf().setCountDecision(d);
+        }
+    }
+    
+    static int searchExamples(Attribute attr,Branch branch){
+        int count = 0;
+        for(Example ex:examples){
+            if(ex.getValue(attr).equals(branch.getVal())){
+                if(ex.getValue(goal).equals(branch.getLeaf().getValue())){
+                    count++;
+                }
             }
         }
-        return -1;
+        return count;
     }
     
     static void TreeTraversal(Node root){
         if(root.getAttribute()!=null){
             System.out.println();
             printSpaces(root);
-//            level+=1;
-//            root.SetDepth(level);
+            countInExamples(root);
             System.out.print(root+"\n");
         }
         else{
-//            printSpaces(root);
-            System.out.print(root.getValue()+"\n");
-//            level+=1;
-//            root.SetDepth(level);
+            System.out.print(root.getValue()+" "+root.getCountDecision()+"\n");
         }
         ArrayList<Branch> arraylist = root.getValues();
         if(arraylist!=null){

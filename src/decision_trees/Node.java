@@ -17,16 +17,27 @@ public class Node {
     private ArrayList<Branch> values;
     private String label;
     private Value v;
+    public int countDecision;
     
     public Node(Attribute attr){
         values = new ArrayList<Branch>();
         this.attr = attr;
         this.depth = 0;
+        this.countDecision = 0;
     }
     
     public Node(){
         values = new ArrayList<Branch>();
         this.depth = 0;
+        this.countDecision = 0;
+    }
+    
+    public void setCountDecision(int v){
+        this.countDecision = v;
+    }
+    
+    public int getCountDecision(){
+        return this.countDecision;
     }
     
     public Node(Value v){
@@ -73,13 +84,16 @@ public class Node {
         return this.attr;
     }
 
+    public int getCount(){
+        return this.countDecision;
+    }
     
     @Override
     public String toString() {
         if(attr!=null){
             return attr.toString();
         }
-        return this.getLabel();
+        return this.v.getContent();
         //return attr.text+":";
         //return "Node{" + "attr=" + attr + ", label=" + label + '}';
     }
