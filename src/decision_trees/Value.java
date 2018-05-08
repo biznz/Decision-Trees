@@ -11,7 +11,7 @@ import java.util.Objects;
  *
  * @author user
  */
-public class Value {
+public class Value implements Comparable{
     private String content;
     private Class classifier;
     
@@ -59,6 +59,29 @@ public class Value {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        Value v = (Value)o;
+        float value;
+        try{
+            value = Float.parseFloat(v.getContent());
+            float current=Float.parseFloat(this.getContent());
+            if(current>value){
+                return 1;
+            }
+            if(value==current){
+                return 1;
+            }
+            if(current<value){
+                return -1;
+            }
+        }
+        catch(Exception ex){
+            return 0;
+        }
+        return -1;
     }
     
     

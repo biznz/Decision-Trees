@@ -5,6 +5,7 @@
  */
 package decision_trees;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -13,16 +14,25 @@ import java.util.Set;
  *
  * @author user
  */
-public class Example {
+public class Example implements Comparable<Example>{
     HashMap<Attribute,Value> content;
     String id;
+    static Attribute sortBy;
     
     public Example(){
         content = new HashMap<Attribute,Value>();
     }
     
+    public static void setSortAttribute(Attribute attr){
+        sortBy = attr;
+    }
+    
     public void add(Attribute attr,Value val){
         content.put(attr, val);
+    }
+    
+    public void replace(Attribute attr,Value v){
+        content.put(attr, v);
     }
     
     public Value getValue(Attribute attr){
@@ -56,6 +66,15 @@ public class Example {
             content+=" "+attr+" : "+this.content.get(attr).getContent();
         }
         return "Example{id:" + id + "content=" + content + '}';
+    }
+
+    @Override
+    public int compareTo(Example o) {
+        Value currentValue=null;
+        Value toCompareTo=null;
+        currentValue=this.getValue(sortBy);
+        toCompareTo = o.getValue(sortBy);
+        return currentValue.compareTo(toCompareTo);
     }
     
     

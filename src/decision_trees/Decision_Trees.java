@@ -12,10 +12,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  *
@@ -32,30 +35,278 @@ public class Decision_Trees {
     private static Attribute goal = null;
     private static int treeDepth = 0;
     private static int level = 0;
-    private static HashSet<Example> examples;
+    private static Set<Example> examples;
+    private static Set<Example> testSamples;
     private static ArrayList<Attribute> attributes;
+    private static Node Tree_root;
+    private static int chosenOption=-1;
+    private static boolean continuous_values;
     
     public static void main(String[] args) {
-        // TODO code application logic here
-        // reads the file with a file reader into a buffer
-        
+        continuous_values=false;
+        while(printInterface()){
+            if(chosenOption==1){
+                readTrainingDataFile();
+                //if sample has continuous values
+//                if(continuous_values==true){
+//                    //sort sample set
+//                    //this sorting needs to occur at any given node in a tree where relevant
+////                    examples=sortSamples(examples);
+////                    printExamples(examples);
+//                    //find splitting points
+//                }
+                TreeTraversal(Tree_root);
+            }
+            if(chosenOption==2){
+                readTestDataFile();
+                classifyTestData();
+            }
+        }
+        //TreeTraversal(Tree_root);   
+    }
+    
+    /**
+     * prints examples data set
+     * 
+     * @param data 
+     */
+    
+    private static void printExamples(Set<Example> data){
+        for(Example ex:data){
+            System.out.println(ex);
+        }
+    }
+    
+    /**
+     * method creates an ordered set from the read data
+     * @param input class variable with the training data to be read
+     */
+    
+    private static TreeSet<Example> sortSamples(Set<Example> input){
+        TreeSet<Example> treeSet = new TreeSet<Example>();
+        for(Example ex:input){
+            treeSet.add(ex);
+        }
+        return treeSet;
+    }
+    
+    /**
+     * method calls a classification method on each example on testSamples set
+     */
+    
+    private static void classifyTestData(){
+        for(Example ex:testSamples){
+//            System.out.println(ex);
+            String classification = classifyExample(ex,Tree_root);
+            ex.replace(goal, new Value(classification));
+            System.out.println("\nExample:"+ex);
+        }
+    }
+    
+    /**
+     * method runs the decision tree on the example providing it with a classification
+     * 
+     * @param ex the example to be classified
+     * @param node the root of the decision tree
+     * @return a string with classification value
+     */
+    
+    private static String classifyExample(Example ex,Node node){
+        Node current = node;
+        String result="";
+        Value v;
+        while(node.getAttribute()!=null){
+            //System.out.println(node.getAttribute()+" fawf");
+            v = ex.getValue(node.getAttribute());
+            for(int a = 0; a<node.getValues().size();a++){
+                //System.out.println(node.getValues().get(a));
+                if(node.getValues().get(a).getVal().equals(v)){
+//                    System.out.println("node value:"+node.getValues().get(a).getVal()+"equals:"+" v :"+v);
+//                    System.out.println("attribute :"+node.getValues().get(a).getLeaf().getAttribute());
+                    if(node.getValues().get(a).getLeaf().getAttribute()==null){
+                        result = node.getValues().get(a).getLeaf().getValue().getContent(); //.getVal().getContent();
+                        return result;
+                    }
+                    node = node.getValues().get(a).getLeaf();
+                    //classifyExample(ex,node.getValues().get(a).getLeaf());
+                }
+            }
+        }
+        return result;
+    }
+    
+    /**
+     * reads a training data file to set examples and runs ID3 on read data
+     */
+    
+    private static void readTrainingDataFile(){
         Scanner in = new Scanner(System.in);
-        String line;
+        String line="";
         System.out.print("Give a training file path: ");
         while((line = in.nextLine()).equals("")){
             System.out.println("Training data file path: ");
+            System.out.println("read line:"+line);
         }
-        System.out.println(line);
-        
-        readTrainingData(args[0]);
-        Node Tree_root = ID3(examples,goal,attributes);
-        //GENERAL_SEARCH(Tree_root,new Fifo());
-        TreeTraversal(Tree_root);
-        
-        
+        try{
+                examples = readData(line,examples);
+                Tree_root = ID3(examples,goal,attributes);
+            }
+            catch(IOException ex){
+                System.out.println("Couldn't read file");
+            }
     }
     
-    private static void readTrainingData(String filePath) throws IOException{
+    /**
+     * reads a test data file to testSamples Set
+     */
+    
+    private static void readTestDataFile(){
+        Scanner in = new Scanner(System.in);
+        String line="";
+        System.out.print("Give a test file path: ");
+        while((line=in.nextLine()).equals("")){
+            System.out.println("Test date file path: ");
+            System.out.println("read line:"+line);
+        }
+        try{
+            testSamples = readData(line,testSamples);
+        }
+        catch(IOException ex){
+            System.out.println("Couldn't read file");
+        }
+    }
+    
+
+    /**
+     * method loops an a console interface on input
+     * with the options "1.read Training data from file"
+     * with the options "2.read test data and classify it"
+     * with the options "3.exit program"
+     * 
+     * @return a boolean on console menu interaction with input
+     */
+    
+    private static boolean printInterface(){
+        Scanner in = new Scanner(System.in);
+        chosenOption = -1;
+        int input;
+        while(chosenOption==-1){
+            System.out.println("\nChoose option");
+            System.out.println("1.read Training data from file");
+            System.out.println("2.read test data and classify it");
+            System.out.println("3.exit program");
+            if(in.hasNext()){
+                input = in.nextInt();
+                if(input==1){
+                    chosenOption=input;
+                }
+                if(input==2){
+                    chosenOption=input;
+                }
+                if(input==3){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * function tests if a value can be a part of a continuous set of values
+     * sets class variable continuous_values to true if so
+     * 
+     * @param examples set of examples to test
+     * @param at the attribute to check
+     */
+    
+    private static void testDiscreteness(Set<Example> examples,Attribute at){
+        Value value = null;
+        float g;
+        for(Example sample:examples){
+            value = sample.getValue(at);
+            try{
+                g=Float.parseFloat(value.getContent());
+                continuous_values=true;
+                return;
+            }
+            catch(NumberFormatException ex){
+                return;
+            }
+        }
+    }
+    
+    
+    /**
+     * method finds split points on the range of continuous dataSet values
+     * 
+     * @param samples the set of samples to test
+     * @param attr the attribute to test the samples for
+     */
+    
+    private static void findSplittingPoints(Set<Example> samples,Attribute attr){
+        Example.setSortAttribute(attr);
+        Example previous=null;
+        Example current=null;
+        int count = 0;
+        HashMap<Example,Integer> maps= new HashMap<Example,Integer>();
+        samples = sortSamples(samples);
+        for(Example a:samples){
+            if(previous==null){
+                previous=a;
+                count+=1;
+            }
+            else if(previous!=null && current==null){
+                current=a;
+                count+=1;
+            }
+            else if(previous!=null && current!=null){
+                previous=current;
+                current=a;
+                count+=1;
+            }
+            if(previous!=null && current!=null){
+                if(!equalClassifiers(previous,current)){
+                    maps.put(a,count);
+                    count=0;
+                }
+                else{
+                    count+=1;
+                }
+            }
+        }
+        printExamples(samples);
+        System.out.print("\n\nSPLIT");
+        System.out.println("\nspliting attr:"+attr);
+        System.out.println("BEGIN MAP");
+        Iterator it = maps.entrySet().iterator();
+        while (it.hasNext()) {
+            HashMap.Entry pair = (HashMap.Entry)it.next();
+            System.out.println(pair.getKey() + " = " + pair.getValue());
+            it.remove(); // avoids a ConcurrentModificationException
+        }
+        System.out.println("END MAP");
+    }
+    
+    private static boolean equalClassifiers(Example a,Example b){
+        if(!a.getValue(goal).equals(b.getValue(goal))){
+            System.out.println("testing a and b");
+            System.out.println("testing :"+a+" testing :"+b);
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * generic data reading method for both training data ( examples are classified ) and,
+     * test data ( examples are to be classified according to decision tree on the data
+     * 
+     * @param filePath file relative or absolute path
+     * @param data set to where read examples will be loaded to
+     * @return data set with the read data
+     * @throws IOException 
+     */
+    
+    private static Set<Example> readData(String filePath,Set<Example> data) throws IOException{
             BufferedReader in = new BufferedReader(new FileReader(new File(filePath))); //restaurant.csv,weather.csv,
             //first line from the file contains the attribute description
             String[] Attributes = in.readLine().split(",");
@@ -65,9 +316,11 @@ public class Decision_Trees {
                 attributes.add(new Attribute(Attributes[i]));
             }
             // goal attribute records the classifier
-            goal = attributes.get(attributes.size()-1);
+            if(goal==null){
+                goal = attributes.get(attributes.size()-1);
+            }
             // the set of examples on the file 
-            examples = new HashSet<Example>();
+            data = new HashSet<Example>();
             String l;
             while(( l = in.readLine())!=null){
                 String[] line = l.split(",");
@@ -76,63 +329,28 @@ public class Decision_Trees {
                 example.setId(line[0]);
                 for(int i=1;i<line.length;i++){
                     Value v = new Value(line[i]);
-                    //System.out.println(attributes.get(i-1));
-//                    System.out.println(v);
+                    //testDiscreteness(line[i]);
                     if(!attributes.get(i-1).possibleValues.contains(v)){
                         attributes.get(i-1).possibleValues.add(v);
                     }
                     example.add(attributes.get(i-1), v);
                 }
-                //System.out.println(example);
-                examples.add(example);
-                //System.out.println(example.getKeys()+"\n");
-            }    
+                data.add(example);
+            }   
+            return data;
         }
     
     
+    /**
+     * implementation of a decision tree learning algorithm ID3
+     * 
+     * @param examples the dataset of examples to learn from
+     * @param target_attribute the classification attribute
+     * @param attributes an arraylist of attributes that describe remaining attributes to be tested
+     * @return a root node on a decision tree of the data
+     */
     
-    private static void classifyTestData(String filePath){
-        
-    }
-    /*
-        Decision Tree represents a function that takes as input 
-        a vector of attribute values and returns a "decision" - a single output value.
-    */
-    
-    /*
-            SUDO CODE
-    
-            ID3(Examples, Target_Attribute, Attributes)
-            Create a root node for the tree
-            If all examples are positive,
-            Return the single-node tree Root, with label = +.
-            If all examples are negative,
-            Return the single-node tree Root, with label = -.
-            If number of predicting attributes is empty,
-            Return the single node tree Root,
-            with label = most common value of the
-            target attribute in the examples.
-            Else
-            A = Attribute that best classifies examples
-            Decision Tree attribute for Root = A
-            For each possible value, vi, of A,
-            Add a new tree branch below Root,
-            corresponding to the test A = vi.
-            Let Examples(vi) be the subset of examples that
-            have the value vi for A
-            If Examples(vi) is empty
-            below this new branch add a leaf node with
-            label = most common target value in the examples
-            Else
-            below this new branch add the subtree
-            ID3 (Examples(vi), Target_Attribute, Attributes - {A})
-            EndIf
-            EndFor
-            EndIf
-            Return Root
-    */
-    
-    protected static Node ID3(HashSet<Example> examples,Attribute target_attribute,ArrayList<Attribute> attributes){
+    protected static Node ID3(Set<Example> examples,Attribute target_attribute,ArrayList<Attribute> attributes){
         //Create a root node for the tree
         Node root = new Node();
 //        root.SetDepth(treeDepth);
@@ -195,10 +413,16 @@ public class Decision_Trees {
         return root;
     }
     
-    /*
-        counts occurrence of each value for an attribute in the data set
-    */
-    public static HashMap<Value,Integer> valuesCount(HashSet<Example> examples, Attribute target_attribute){
+    /**
+     * method builds a map of values and the number of occurrences of the value in 
+     * set data
+     * 
+     * @param examples set of examples 
+     * @param target_attribute the target_attribute to get the values from
+     * @return an HashMap of values on number of occurrences
+     */
+    
+    public static HashMap<Value,Integer> valuesCount(Set<Example> examples, Attribute target_attribute){
         HashMap<Value,Integer> valueCounter = new HashMap<Value,Integer>();
 //        System.out.println("attribute possible values:"+target_attribute.getPossibleValues());
         for(Value v:target_attribute.getPossibleValues()){
@@ -215,10 +439,16 @@ public class Decision_Trees {
         return valueCounter;
     }
     
-    /*
-        function returns the most common value for target_attribute from the dataset
-    */
-    public static Value mostCommonValueOnTargetAttribute(HashSet<Example> examples, Attribute target_attribute){
+    /**
+     * method verifies which value is the most common on target attribute
+     * it maps a number of occurrences to a value by calling valuesCount
+     * 
+     * @param examples set of examples to check a value from
+     * @param target_attribute a target attribute from which values are counted
+     * @return 
+     */
+    
+    public static Value mostCommonValueOnTargetAttribute(Set<Example> examples, Attribute target_attribute){
         HashMap<Value,Integer> valueCounter = valuesCount(examples,target_attribute);
         Value result = null;
         int ocurrence=0;
@@ -230,9 +460,13 @@ public class Decision_Trees {
         return result;
     }
     
-    /*
-        Removes attribute A from set of attributes
-    */
+    /**
+     * removes an attribute from an arraylist
+     * 
+     * @param attributes the arraylist of attributes
+     * @param toRemove the attribute to remove from the attribute list
+     * @return the resulting arraylist ( without toRemove attribute )
+     */
     
     public static ArrayList<Attribute> Attributes_removedA(ArrayList<Attribute> attributes,Attribute toRemove){
         ArrayList<Attribute> att = new ArrayList<Attribute>();
@@ -243,9 +477,16 @@ public class Decision_Trees {
         return att;
     }
     
-    /*
-        returns a subset of examples that have Value v on Attribute attr
-    */
+    
+    
+    /**
+     * builds a subset of examples that have Value v on Attribute attr
+     * 
+     * @param examples the full example set
+     * @param attr the attribute to check
+     * @param v the value on the attribute to check
+     * @return subset of examples
+     */
     
     public static HashSet<Example> subSetHavingAttribute(Set<Example> examples,Attribute attr,Value v){
         HashSet<Example> subSet = new HashSet<Example>();
@@ -257,9 +498,14 @@ public class Decision_Trees {
         return subSet;
     }
     
-    /*
-        checks if all examples yield the same classification
-    */
+    
+    /**
+     * method checks if all the input set examples have same classification
+     * 
+     * @param examples the set examples to be tested ( always a subset of the training data )
+     * @param target_attribute the classifier attribute
+     * @return true if all have the same classification, false otherwise
+     */
     
     public static boolean examplesHaveSameClassifier(Set<Example> examples,Attribute target_attribute){
         //System.out.println(target_attribute);
@@ -275,41 +521,17 @@ public class Decision_Trees {
         return true;
     }
     
-    public static boolean examplesArePositive(Set<Example> examples,Attribute target_attribute){
-        String classification = null;
-        for(Example ex: examples){
-            if(classification == null){
-               classification = ex.getValue(target_attribute).getContent();
-            }
-            else if(ex.getValue(target_attribute).getContent().equals(classification)){
-                return false;
-            }
-        }
-        return true;
-    }
+    /**
+     * 
+     * method calculates the most important attribute by determining the entropy of each
+     * and returning the one with less entropy
+     * 
+     * @param attributes an arraylist of attributes that describes attributes to be tested
+     * @param examples set of data examples 
+     * @return most important attribute for the decision tree
+     */
     
-    /*
-       
-    */
-    
-    public static boolean examplesAreNegative(Set<Example> examples,Attribute target_attribute){
-        String classification = null;
-        for(Example ex: examples){
-            if(classification == null){
-               classification = ex.getValue(target_attribute).getContent();
-            }
-            else if(ex.getValue(target_attribute).getContent().equals(classification)){
-                return false;
-            }
-        }
-        return true;
-    }
-    
-    /*
-        
-    */
-    
-    public static Attribute IMPORTANCE(ArrayList<Attribute> attributes, HashSet<Example> examples){
+    public static Attribute IMPORTANCE(ArrayList<Attribute> attributes, Set<Example> examples){
         Attribute minimizer = null;
         double entropy_value = Short.MAX_VALUE;
         for(Attribute attr:attributes){
@@ -321,17 +543,22 @@ public class Decision_Trees {
                 }
             }
         }
-        //System.out.println("\n\n\nThe minimizer:"+minimizer+"\n\n");
+        testDiscreteness(examples,minimizer);
+        findSplittingPoints(examples,minimizer);
         return minimizer;
     }
     
-    /*
-        returns an 
-            Entropy (in information theory) a logarithmic measure of the rate of transfer of information in a particular message or language.
-            value on given attribute
-    */
+    /**
+     * 
+     * Entropy (in information theory) a logarithmic measure of the rate of transfer of information in a particular message or language.
+     *       value on given attribute
+     * 
+     * @param attr attribute to calculate the information gain on
+     * @param examples set of data examples 
+     * @return an entropy value for a given attribute
+     */
     
-    public static double ENTROPY(Attribute attr,HashSet<Example> examples){
+    public static double ENTROPY(Attribute attr,Set<Example> examples){
         int total_examples = examples.size();
         // ocurrence of value in examples
         HashMap<Value,Integer> valueCounter = valuesCount(examples,attr);
@@ -366,10 +593,6 @@ public class Decision_Trees {
 //                    System.out.println("count "+count);
                 }
             }
-//            classifier.setValue(v);
-//            classifier.setCounter(goalCounter.get(s).get(v));
-//            System.out.println("the value:"+v+" with value:"+goalCounter.get(s).get(v));
-//            s.setClassifier(classifier);
         }
         
         double result=0;
@@ -405,16 +628,22 @@ public class Decision_Trees {
         return result;
     }
     
+    /**
+     * method calculates de logarithm base 2 of x
+     * 
+     * @param num x value to use in log b (x)
+     * @return a log base 2 value of x
+     */
+    
     public static double log2(double num){
         return Math.log(num)/Math.log(2);
     }
     
-    
-//    protected static void printSpaces(int spaces){
-//        for(int a=0;a<spaces;a++){
-//            System.out.print("  ");
-//        }
-//    }
+    /**
+     * method a prints a product of depth of the node and # of spaces
+     * 
+     * @param node a node from current decision tree
+     */
     
     protected static void printSpaces(Node node){
         for(int a=0;a<node.getDepth();a++){
@@ -422,11 +651,26 @@ public class Decision_Trees {
         }
     }
     
+    /**
+     * method a prints a product of depth of the branch and # of spaces
+     * 
+     * @param branch a branch from current decision tree
+     */
+    
     protected static void printSpaces(Branch branch){
         for(int a=0;a<branch.getDepth();a++){
             System.out.print("  ");
         }
     }
+    
+    /**
+     * method counts the occurrence of different classifications
+     * for different values in different branches and sets the countDecision
+     * value on leaf Nodes
+     * 
+     * @param node root of a decision tree
+     */
+    
     
     static void countInExamples(Node node){
         int d=0;
@@ -441,6 +685,14 @@ public class Decision_Trees {
         }
     }
     
+    /**
+     * method counts the number of attributes with a expected classification
+     * 
+     * @param attr attribute to evaluate
+     * @param branch where the current classification is retrieved from
+     * @return a number of occurrences
+     */
+    
     static int searchExamples(Attribute attr,Branch branch){
         int count = 0;
         for(Example ex:examples){
@@ -452,6 +704,12 @@ public class Decision_Trees {
         }
         return count;
     }
+    
+    /**
+     * method is a recursive tree traversal on a decision tree
+     * printing to screen its components
+     * @param root the root node of the decision tree
+     */
     
     static void TreeTraversal(Node root){
         if(root.getAttribute()!=null){
@@ -476,56 +734,5 @@ public class Decision_Trees {
                 //TreeTraversal(arraylist.get(s).getVal());
            }
        }
-    }
-    
-    protected static String GENERAL_SEARCH(Node root,MyQueue<Node> QUEUEING_FN){
-        MyQueue<Node> nodes = MAKE_QUEUE(QUEUEING_FN,root);
-        while(!EMPTY(nodes)){
-            Node node = REMOVE_FRONT(nodes);
-            String tab = "\t";
-            for(int i=0;i<node.getDepth();i++){
-                System.out.print(tab);
-            }
-            System.out.println(node);
-            Set<Node> new_nodes = EXPAND(node);
-            nodes = QUEUEING_FN.add(nodes,new_nodes);
-        }
-        return "solution not found";
-    }
-    
-    private static MyQueue<Node> MAKE_QUEUE(MyQueue<Node> queue,Node node){
-        queue.add(queue, node);
-        return queue;
-    }
-    
-    private static Set<Node> EXPAND(Node node){
-        Set<Node> childNodes = new HashSet<Node>();
-        for(Branch b:node.getValues()){
-            childNodes.add(b.getLeaf());
-        }
-        return childNodes;
-    }
-    
-    
-    protected static boolean EMPTY(MyQueue<Node> myQueue){
-        if(myQueue.size==0)return true;
-        return false;
-    }
-    
-    private static Node REMOVE_FRONT(MyQueue<Node> nodes){
-        Node node = null;
-        //Algorithm.currentDepth+=1;
-        if(nodes.size==0){return node;}
-        //System.out.println(nodes.type+"\n");
-        Fifo fifo = (Fifo)nodes;
-                //System.out.println("Removing the following node");
-        try{
-            node = (Node)fifo.list.remove();
-            fifo.size--;
-            }
-        catch(NoSuchElementException ex){
-            return null;
-        }
-        return node;
     }
 }
