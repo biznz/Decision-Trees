@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
@@ -40,6 +41,7 @@ public class Decision_Trees {
     private static ArrayList<Attribute> attributes;
     private static Node Tree_root;
     private static int chosenOption=-1;
+    private static LinkedHashMap<Example,HashMap<Attribute,Integer>> maps; // categorization maps, counts number of occurrences in a category
     private static boolean continuous_values;
     
     public static void main(String[] args) {
@@ -47,14 +49,6 @@ public class Decision_Trees {
         while(printInterface()){
             if(chosenOption==1){
                 readTrainingDataFile();
-                //if sample has continuous values
-//                if(continuous_values==true){
-//                    //sort sample set
-//                    //this sorting needs to occur at any given node in a tree where relevant
-////                    examples=sortSamples(examples);
-////                    printExamples(examples);
-//                    //find splitting points
-//                }
                 TreeTraversal(Tree_root);
             }
             if(chosenOption==2){
@@ -116,19 +110,14 @@ public class Decision_Trees {
         String result="";
         Value v;
         while(node.getAttribute()!=null){
-            //System.out.println(node.getAttribute()+" fawf");
             v = ex.getValue(node.getAttribute());
             for(int a = 0; a<node.getValues().size();a++){
-                //System.out.println(node.getValues().get(a));
                 if(node.getValues().get(a).getVal().equals(v)){
-//                    System.out.println("node value:"+node.getValues().get(a).getVal()+"equals:"+" v :"+v);
-//                    System.out.println("attribute :"+node.getValues().get(a).getLeaf().getAttribute());
                     if(node.getValues().get(a).getLeaf().getAttribute()==null){
                         result = node.getValues().get(a).getLeaf().getValue().getContent(); //.getVal().getContent();
                         return result;
                     }
                     node = node.getValues().get(a).getLeaf();
-                    //classifyExample(ex,node.getValues().get(a).getLeaf());
                 }
             }
         }
@@ -248,7 +237,8 @@ public class Decision_Trees {
         Example previous=null;
         Example current=null;
         int count = 0;
-        HashMap<Example,Integer> maps= new HashMap<Example,Integer>();
+        HashMap<Attribute,Integer> attrCount = new HashMap<Attribute,Integer>();
+        maps= new LinkedHashMap<Example,HashMap<Attribute,Integer>>();
         samples = sortSamples(samples);
         for(Example a:samples){
             if(previous==null){
@@ -266,7 +256,9 @@ public class Decision_Trees {
             }
             if(previous!=null && current!=null){
                 if(!equalClassifiers(previous,current)){
-                    maps.put(a,count);
+                    System.out.println("current count:"+count);
+                    attrCount.put(attr, count);
+                    maps.put(previous,attrCount);
                     count=0;
                 }
                 else{
@@ -274,7 +266,7 @@ public class Decision_Trees {
                 }
             }
         }
-        printExamples(samples);
+        //printExamples(samples);
         System.out.print("\n\nSPLIT");
         System.out.println("\nspliting attr:"+attr);
         System.out.println("BEGIN MAP");
@@ -287,10 +279,16 @@ public class Decision_Trees {
         System.out.println("END MAP");
     }
     
+    /**
+     * method compares 2 examples classifications 
+     * 
+     * @param a one of the Examples to compare with
+     * @param b the other Example to compare with
+     * @return true if examples have the same classification, false if not
+     */
+    
     private static boolean equalClassifiers(Example a,Example b){
-        if(!a.getValue(goal).equals(b.getValue(goal))){
-            System.out.println("testing a and b");
-            System.out.println("testing :"+a+" testing :"+b);
+        if(a.getValue(goal).equals(b.getValue(goal))){
             return true;
         }
         return false;
@@ -734,5 +732,10 @@ public class Decision_Trees {
                 //TreeTraversal(arraylist.get(s).getVal());
            }
        }
+    }
+    
+    
+    static void categorize(){
+        
     }
 }
