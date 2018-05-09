@@ -330,7 +330,7 @@ public class Decision_Trees {
 //                a.getContent().replace(attr, interval);
 //            }
         }
-        //printExamples(samples);
+        printExamples(samples);
         System.out.print("\n\nSPLIT");
         System.out.println("\nspliting attr:"+attr);
         System.out.println("BEGIN MAP");
