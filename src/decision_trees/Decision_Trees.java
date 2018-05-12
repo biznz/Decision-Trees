@@ -9,6 +9,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,6 +40,7 @@ public class Decision_Trees {
     private static int level = 0;
     private static Set<Example> examples;
     private static Set<Example> testSamples;
+    private static Set<Float[]> values;
     private static ArrayList<Attribute> attributes;
     private static Node Tree_root;
     private static int chosenOption=-1;
@@ -236,35 +239,96 @@ public class Decision_Trees {
         Example.setSortAttribute(attr);
         Example previous=null;
         Example current=null;
+        DecimalFormat df = new DecimalFormat("##.#");
+        df.setRoundingMode(RoundingMode.DOWN);
         int count = 0;
+        int total = 0;
+        float minimalValue=0;
+        float maximalValue=0;
+        Value interval = null;
         HashMap<Attribute,Integer> attrCount = new HashMap<Attribute,Integer>();
         maps= new LinkedHashMap<Example,HashMap<Attribute,Integer>>();
+        values = new HashSet<Float[]>();
+        Float[] minMaxValues = new Float[2];
         samples = sortSamples(samples);
         for(Example a:samples){
+            total+=1;
             if(previous==null){
                 previous=a;
+                minimalValue = Float.parseFloat(a.getContent().get(attr).getContent());
                 count+=1;
             }
             else if(previous!=null && current==null){
                 current=a;
                 count+=1;
+                attrCount.put(attr, count);
             }
             else if(previous!=null && current!=null){
                 previous=current;
                 current=a;
                 count+=1;
+                attrCount.put(attr, count);
             }
             if(previous!=null && current!=null){
                 if(!equalClassifiers(previous,current)){
+                    if(count>=samples.size()*0.08){
+                        maximalValue = Float.parseFloat(current.getContent().get(attr).toString());
+                        float first = Float.parseFloat(previous.getContent().get(attr).toString());
+                        float second = Float.parseFloat(current.getContent().get(attr).toString());
+                        float avg = (first+second)/2;
+                        String as = df.format(minimalValue);
+                        String bs = df.format(avg);
+                        if(!as.contains(".")){
+                            as=as+".0";
+                        }
+                        if(!bs.contains(".")){
+                            bs=bs+".0";
+                        }
+                        interval = new Value(""+as+"<="+bs);
+                        minMaxValues[0] = minimalValue;
+                        minMaxValues[1] = avg;
+                        values.add(minMaxValues);
+                        minMaxValues = new Float[2];
+                        minimalValue = avg;
+                        System.out.println("interval :"+interval);
+                    }
                     System.out.println("current count:"+count);
                     attrCount.put(attr, count);
                     maps.put(previous,attrCount);
                     count=0;
+                    attrCount= new HashMap<Attribute,Integer>();
                 }
                 else{
                     count+=1;
+                    attrCount.put(attr, count);
+                    if(total==samples.size()){
+                        maximalValue = Float.parseFloat(current.getContent().get(attr).toString());
+                        float first = Float.parseFloat(previous.getContent().get(attr).toString());
+                        float second = Float.parseFloat(current.getContent().get(attr).toString());
+                        //float avg = (first+second)/2;
+                        String as = df.format(minimalValue);
+                        String bs = df.format(maximalValue);
+//                        attrCount.put(attr, count);
+                         if(!as.contains(".")){
+                            as=as+".0";
+                        }
+                        if(!bs.contains(".")){
+                            bs=bs+".0";
+                        }
+                        minMaxValues[0] = minimalValue;
+                        minMaxValues[1] = maximalValue;
+                        values.add(minMaxValues);
+                        minMaxValues = new Float[2];
+                        interval = new Value(""+as+"<="+bs);
+                        System.out.println("interval :"+interval);
+                        maps.put(previous, attrCount);
+                    }
                 }
             }
+//            if(Float.parseFloat(a.getContent().get(attr).getContent())>=minimalValue &&
+//                    Float.parseFloat(a.getContent().get(attr).getContent())<=maximalValue){
+//                a.getContent().replace(attr, interval);
+//            }
         }
         //printExamples(samples);
         System.out.print("\n\nSPLIT");
@@ -274,9 +338,36 @@ public class Decision_Trees {
         while (it.hasNext()) {
             HashMap.Entry pair = (HashMap.Entry)it.next();
             System.out.println(pair.getKey() + " = " + pair.getValue());
-            it.remove(); // avoids a ConcurrentModificationException
+            //it.remove(); // avoids a ConcurrentModificationException
         }
         System.out.println("END MAP");
+        //categorizeList(samples);
+    }
+    
+    private static Set<Example> categorizeSamples(Set<Example> examples,Attribute attr){
+        for(Example example:examples){
+            for(Float[] val:values){
+                Float exampleVal=new Float(0.0);
+                try{
+                    exampleVal= Float.parseFloat(example.getContent().get(attr).toString());
+//                    System.out.println("exampleVal:"+exampleVal);
+//                    System.out.println("values 0, 1 :"+val[0]+" :"+val[1]);
+                if(exampleVal>=val[0] && exampleVal<=val[1]){
+                    String first = val[0].toString();
+                    String second = val[1].toString();
+                    Value interval = new Value(""+first+"<="+second);
+                    if(!attr.getPossibleValues().contains(val)){
+                        attr.addPossibleValue(interval);
+                    }
+                    example.getContent().replace(attr, interval);
+                    //System.out.println(" new value:"+interval);
+                    }
+                }
+                catch(Exception ex){
+                }
+            }
+        }
+        return examples;
     }
     
     /**
@@ -541,8 +632,14 @@ public class Decision_Trees {
                 }
             }
         }
-        testDiscreteness(examples,minimizer);
-        findSplittingPoints(examples,minimizer);
+//        testDiscreteness(examples,minimizer);
+//        findSplittingPoints(examples,minimizer);
+//        examples=categorizeSamples(examples,minimizer);
+        //ENTROPY(minimizer,examples);
+        for(Example a: examples){
+            System.out.println("the examples"+a);
+        }
+//        System.out.println("THE EXAMPLES:"+examples);
         return minimizer;
     }
     
@@ -732,10 +829,5 @@ public class Decision_Trees {
                 //TreeTraversal(arraylist.get(s).getVal());
            }
        }
-    }
-    
-    
-    static void categorize(){
-        
     }
 }
