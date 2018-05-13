@@ -52,7 +52,7 @@ public class Decision_Trees {
         while(printInterface()){
             if(chosenOption==1){
                 readTrainingDataFile();
-                TreeTraversal(Tree_root);
+//                TreeTraversal(Tree_root);
             }
             if(chosenOption==2){
                 readTestDataFile();
@@ -141,7 +141,11 @@ public class Decision_Trees {
         }
         try{
                 examples = readData(line,examples);
-                Tree_root = ID3(examples,goal,attributes);
+                examples = run_categorization(examples);
+                for(Example example: examples){
+                    System.out.println("Out: "+example);
+                }
+//                Tree_root = ID3(examples,goal,attributes);
             }
             catch(IOException ex){
                 System.out.println("Couldn't read file");
@@ -162,10 +166,30 @@ public class Decision_Trees {
         }
         try{
             testSamples = readData(line,testSamples);
+//            testDiscreteness(examples,minimizer);
+//            findSplittingPoints(examples,minimizer);
+//            examples=categorizeSamples(examples,minimizer);
         }
         catch(IOException ex){
             System.out.println("Couldn't read file");
         }
+    }
+    
+    private static Set<Example> run_categorization(Set<Example> examples){
+        for(int a=0;a<attributes.size();a++){
+            if(!attributes.get(a).equals(goal)){
+                testDiscreteness(examples,attributes.get(a));
+                if(continuous_values==true){
+                    findSplittingPoints(examples,attributes.get(a));
+                    examples=categorizeSamples(examples,attributes.get(a));
+                    continuous_values=false;
+                }
+            }
+        }
+        return examples;
+//        testDiscreteness(examples,minimizer);
+//        findSplittingPoints(examples,minimizer);
+//        examples=categorizeSamples(examples,minimizer);
     }
     
 
@@ -255,6 +279,7 @@ public class Decision_Trees {
             total+=1;
             if(previous==null){
                 previous=a;
+                System.out.println(a.getContent().get(attr).getContent());
                 minimalValue = Float.parseFloat(a.getContent().get(attr).getContent());
                 count+=1;
             }
@@ -290,9 +315,9 @@ public class Decision_Trees {
                         values.add(minMaxValues);
                         minMaxValues = new Float[2];
                         minimalValue = avg;
-                        System.out.println("interval :"+interval);
+//                        System.out.println("interval :"+interval);
                     }
-                    System.out.println("current count:"+count);
+//                    System.out.println("current count:"+count);
                     attrCount.put(attr, count);
                     maps.put(previous,attrCount);
                     count=0;
@@ -319,8 +344,8 @@ public class Decision_Trees {
                         minMaxValues[1] = maximalValue;
                         values.add(minMaxValues);
                         minMaxValues = new Float[2];
-                        interval = new Value(""+as+"<="+bs);
-                        System.out.println("interval :"+interval);
+//                        interval = new Value(""+as+"<="+bs);
+//                        System.out.println("interval :"+interval);
                         maps.put(previous, attrCount);
                     }
                 }
@@ -330,17 +355,17 @@ public class Decision_Trees {
 //                a.getContent().replace(attr, interval);
 //            }
         }
-        printExamples(samples);
-        System.out.print("\n\nSPLIT");
-        System.out.println("\nspliting attr:"+attr);
-        System.out.println("BEGIN MAP");
-        Iterator it = maps.entrySet().iterator();
-        while (it.hasNext()) {
-            HashMap.Entry pair = (HashMap.Entry)it.next();
-            System.out.println(pair.getKey() + " = " + pair.getValue());
-            //it.remove(); // avoids a ConcurrentModificationException
-        }
-        System.out.println("END MAP");
+//        printExamples(samples);
+//        System.out.print("\n\nSPLIT");
+//        System.out.println("\nspliting attr:"+attr);
+//        System.out.println("BEGIN MAP");
+//        Iterator it = maps.entrySet().iterator();
+//        while (it.hasNext()) {
+//            HashMap.Entry pair = (HashMap.Entry)it.next();
+//            System.out.println(pair.getKey() + " = " + pair.getValue());
+//            //it.remove(); // avoids a ConcurrentModificationException
+//        }
+//        System.out.println("END MAP");
         //categorizeList(samples);
     }
     
@@ -350,24 +375,51 @@ public class Decision_Trees {
                 Float exampleVal=new Float(0.0);
                 try{
                     exampleVal= Float.parseFloat(example.getContent().get(attr).toString());
-//                    System.out.println("exampleVal:"+exampleVal);
-//                    System.out.println("values 0, 1 :"+val[0]+" :"+val[1]);
+                    System.out.println("exampleVal:"+exampleVal);
+                    System.out.println("values 0, 1 :"+val[0]+" ,"+val[1]);
+//                System.out.println(attr.getPossibleValues());
                 if(exampleVal>=val[0] && exampleVal<=val[1]){
                     String first = val[0].toString();
+                    if(attr.getPossibleValues().contains(new Value(first))){
+                       attr.getPossibleValues().remove(new Value(first));
+                    }
                     String second = val[1].toString();
-                    Value interval = new Value(""+first+"<="+second);
+                    if(attr.getPossibleValues().contains(new Value(second))){
+                       attr.getPossibleValues().remove(new Value(second));
+                    }
+                    Value interval = new Value("["+first+","+second+"]");
+//                    System.out.println(interval+" :a");
+//                    System.out.println(attr.getPossibleValues());
                     if(!attr.getPossibleValues().contains(val)){
                         attr.addPossibleValue(interval);
                     }
                     example.getContent().replace(attr, interval);
                     //System.out.println(" new value:"+interval);
                     }
+//                System.out.println(attr.getPossibleValues());
                 }
                 catch(Exception ex){
                 }
             }
+//            for(Attribute atrr: example.getContent().keySet()){
+//                System.out.println(": "+attr.getPossibleValues());
+//            }
         }
+//        removeUnwantedValues(attr);
         return examples;
+    }
+    
+    private static void removeUnwantedValues(Attribute attribute,String start,String finish){
+            for(Value v:attribute.getPossibleValues()){
+                try{
+                    Float floatValue = Float.parseFloat(v.toString());
+                    attribute.getPossibleValues().remove(v);
+                }
+                catch(Exception ex){
+                    
+                }
+            }
+        return;
     }
     
     /**
@@ -493,6 +545,7 @@ public class Decision_Trees {
                 else{
                     ArrayList<Attribute> newAttributes = Attributes_removedA(attributes,A);
                     Node subTree = ID3(subSet_Examples, target_attribute, newAttributes);
+//                    System.out.println("The node: "+subTree);
 //                    subTree.SetDepth(newBranch.getDepth()+1);
                     newBranch.addLeaf(subTree);
                 }
@@ -628,17 +681,14 @@ public class Decision_Trees {
                 double attribute_entropy = ENTROPY(attr,examples);
                 if(attribute_entropy<entropy_value){
                     minimizer = attr;
-                    entropy_value=attribute_entropy;
+                    entropy_value = attribute_entropy;
                 }
             }
         }
-//        testDiscreteness(examples,minimizer);
-//        findSplittingPoints(examples,minimizer);
-//        examples=categorizeSamples(examples,minimizer);
         //ENTROPY(minimizer,examples);
-        for(Example a: examples){
-            System.out.println("the examples"+a);
-        }
+//        for(Example a: examples){
+//            System.out.println("the examples"+a);
+//        }
 //        System.out.println("THE EXAMPLES:"+examples);
         return minimizer;
     }
