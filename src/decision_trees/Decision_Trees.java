@@ -52,7 +52,7 @@ public class Decision_Trees {
         while(printInterface()){
             if(chosenOption==1){
                 readTrainingDataFile();
-//                TreeTraversal(Tree_root);
+                TreeTraversal(Tree_root);
             }
             if(chosenOption==2){
                 readTestDataFile();
@@ -141,11 +141,8 @@ public class Decision_Trees {
         }
         try{
                 examples = readData(line,examples);
-                examples = run_categorization(examples);
-                for(Example example: examples){
-                    System.out.println("Out: "+example);
-                }
-//                Tree_root = ID3(examples,goal,attributes);
+//                examples = run_categorization(examples);
+                Tree_root = ID3(examples,goal,attributes);
             }
             catch(IOException ex){
                 System.out.println("Couldn't read file");
@@ -279,7 +276,7 @@ public class Decision_Trees {
             total+=1;
             if(previous==null){
                 previous=a;
-                System.out.println(a.getContent().get(attr).getContent());
+//                System.out.println(a.getContent().get(attr).getContent());
                 minimalValue = Float.parseFloat(a.getContent().get(attr).getContent());
                 count+=1;
             }
@@ -375,10 +372,10 @@ public class Decision_Trees {
                 Float exampleVal=new Float(0.0);
                 try{
                     exampleVal= Float.parseFloat(example.getContent().get(attr).toString());
-                    System.out.println("exampleVal:"+exampleVal);
-                    System.out.println("values 0, 1 :"+val[0]+" ,"+val[1]);
+//                    System.out.println("exampleVal:"+exampleVal);
+//                    System.out.println("values 0, 1 :"+val[0]+" ,"+val[1]);
 //                System.out.println(attr.getPossibleValues());
-                if(exampleVal>=val[0] && exampleVal<=val[1]){
+                if(val[0]<=exampleVal && exampleVal<=val[1]){
                     String first = val[0].toString();
                     if(attr.getPossibleValues().contains(new Value(first))){
                        attr.getPossibleValues().remove(new Value(first));
@@ -390,11 +387,16 @@ public class Decision_Trees {
                     Value interval = new Value("["+first+","+second+"]");
 //                    System.out.println(interval+" :a");
 //                    System.out.println(attr.getPossibleValues());
+                    if(attr.getPossibleValues().contains(new Value(""+exampleVal))){
+                        attr.getPossibleValues().remove(new Value(""+exampleVal));
+                    }
                     if(!attr.getPossibleValues().contains(val)){
                         attr.addPossibleValue(interval);
+//                        removeUnwantedValues(attr,values);
                     }
                     example.getContent().replace(attr, interval);
                     //System.out.println(" new value:"+interval);
+//                    System.out.println("System.out.println: "+example.getKeys());
                     }
 //                System.out.println(attr.getPossibleValues());
                 }
@@ -405,21 +407,12 @@ public class Decision_Trees {
 //                System.out.println(": "+attr.getPossibleValues());
 //            }
         }
+//        for(Attribute s:attributes){
+//            System.out.println(s);
+//        }
+        
 //        removeUnwantedValues(attr);
         return examples;
-    }
-    
-    private static void removeUnwantedValues(Attribute attribute,String start,String finish){
-            for(Value v:attribute.getPossibleValues()){
-                try{
-                    Float floatValue = Float.parseFloat(v.toString());
-                    attribute.getPossibleValues().remove(v);
-                }
-                catch(Exception ex){
-                    
-                }
-            }
-        return;
     }
     
     /**
@@ -519,6 +512,8 @@ public class Decision_Trees {
         
         else{
             Attribute A = IMPORTANCE(attributes,examples);
+//            System.out.println(" the resulting attribute"+A);
+            if(A!=null){
             root.setAttribute(A);
             for(Value v: A.getPossibleValues()){
                 //Add a new tree branch below Root,
@@ -550,6 +545,7 @@ public class Decision_Trees {
                     newBranch.addLeaf(subTree);
                 }
             }
+        }
         }
         //root.SetDepth(treeDepth+1);
         return root;
